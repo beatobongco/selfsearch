@@ -77,12 +77,16 @@
                     app.lastPull = value
                   })
               } else {
-                console.log('Creating new lunr')
+                console.log('Creating stores...')
                 var q = []
-
-                app.createBookStore().then(function(value) {
-                  Promise.all(value).then(app.buildLunr)
+                app.createNotesStore().then(function(value) {
+                  Promise.all(value).then(
+                    app.createBookStore().then(function(value3) {
+                      Promise.all(value3).then(app.buildLunr)
+                    })
+                  )
                 })
+
               }
             })
         },
@@ -99,6 +103,7 @@
           })
         },
         buildLunr: function () {
+          console.log('Building lunr...')
           // builds lunr based on contents of store
           this.idx = lunr(function() {
             this.field('title')
@@ -129,6 +134,37 @@
             })
 
         },
+        createNotesStore: function() {
+          return new Promise(function(resolve, reject) {
+            var deferreds = []
+            // TODO: Get text from
+            // then link to actual
+            var rawURL = 'https://raw.githubusercontent.com/beatobongco/TIL/master/day_notes/'
+            var origURL = 'https://github.com/beatobongco/TIL/blob/master/day_notes/'
+
+            $.get('https://beatobongco.com/TIL/day_notes/', function(resp) {
+              var tempHTML = document.createElement('html')
+              tempHTML.innerHTML = resp
+              $('ul li a', tempHTML).each(function(i, obj) {
+                var toScrape = $(obj).attr('href').replace(origURL, rawURL)
+                deferreds.push(
+                  $.get(toScrape, function(resp2) {
+                    var rawNotes = document.createElement('html')
+                    rawNotes.innerHTML = resp2
+                    var linkedURL = toScrape.replace(rawURL, origURL)
+                    console.log('Loading day notes...')
+                    app.store[linkedURL] = {
+                      'id': linkedURL,
+                      'title': toScrape.replace(rawURL, ''),
+                      'body': resp2
+                    }
+                  })
+                )
+              }) // each
+              resolve(deferreds)
+            })
+          })
+        },
         createBookStore: function() {
           // side effect: adds to app.store's keys and values
           // returns an array of $.get Promises
@@ -150,7 +186,7 @@
                       var notesText = $('#raw-notes', rawNotes).text()
                       var bookTitle = notesText.split('\n')[2]
                       if (!notesText.startsWith('Bought physical copy.')) {
-                        console.log('Loading...')
+                        console.log('Loading book highlights...')
                         app.store[fullURL] = {
                           'id': fullURL,
                           'title': bookTitle,
@@ -168,6 +204,8 @@
         search: function() {
           this.results = []
           var res = this.idx.search(this.query)
+
+          console.log(res)
 
           for (var i = 0; i < res.length; i++) {
             var k = res[i].ref
