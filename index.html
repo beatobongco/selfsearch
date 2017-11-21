@@ -8,31 +8,34 @@
 <body>
   <div class="container">
     <div id="app">
-      <div class="flex">
-        <h1>selfsearch</h1>
-        <p class="last-updated">Last pulled: {{lastPull}} <button @click="refresh">Refresh</button></p>
-      </div>
-      <div class="flex">
-        <input type="text" name="query" v-model="query" @keyup.enter="search" placeholder="Search...">
-        <button class="btn-search" v-on:click="search">Go</button>
-      </div>
-      <div class="results">
-        <ul v-if="results.length > 0">
-          <transition-group appear name="trn-results" tag="div">
-            <li v-for="res in results" :key="res.url">
-              <div>
-                <a class="title" :href="res.url">{{res.title}}</a>
-                <ul class="highlights">
-                  <li v-for="hl in res.highlights" v-html="hl"></li>
-                </ul>
-              </div>
-            </li>
-          </transition-group>
-        </ul>
-        <p v-else-if="!firstRun">No results.</p>
+      <div class="message" v-if="isLoading">{{message}}</div>
+      <div v-else>
+        <div class="flex">
+          <h1>selfsearch</h1>
+          <p class="last-updated">Last pulled: {{lastPull}} <button @click="refresh">Refresh</button></p>
+        </div>
+        <div class="flex">
+          <input type="text" name="query" v-model="query" @keyup.enter="search" placeholder="Search...">
+          <button class="btn-search" v-on:click="search">Go</button>
+        </div>
+        <div class="results">
+          <ul v-if="results.length > 0">
+            <transition-group appear name="trn-results" tag="div">
+              <li v-for="res in results" :key="res.url">
+                <div>
+                  <a class="title" :href="res.url">{{res.title}}</a>
+                  <ul class="highlights">
+                    <li v-for="hl in res.highlights" v-html="hl"></li>
+                  </ul>
+                </div>
+              </li>
+            </transition-group>
+          </ul>
+          <p v-else-if="!firstRun">No results.</p>
+        </div>
+        <footer>Made with 🔥 by <a href="https://beatobongco.com/UI-Kata/">Beato Bongco</a></footer>
       </div>
     </div>
-    <footer>Made with 🔥 by <a href="https://beatobongco.com/UI-Kata/">Beato Bongco</a></footer>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.2/vue.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>

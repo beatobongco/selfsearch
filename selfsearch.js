@@ -7,7 +7,6 @@ var CHR_BUFFER = 50
 // https://lunrjs.com/guides/index_prebuilding.html
 // TODO:
 // * add loading + progress (get counts)
-// * add vue transitions
 
 String.prototype.splice = function(idx, rem, str) {
   return this.slice(0, idx) + str + this.slice(idx + Math.abs(rem))
@@ -16,7 +15,9 @@ String.prototype.splice = function(idx, rem, str) {
 var app = new Vue({
   el: '#app',
   data: {
+    isLoading: true,
     firstRun: true,
+    message: 'Loading...',
     store: {},
     idx: null,
     lastPull: null,
@@ -34,20 +35,21 @@ var app = new Vue({
         .getItem('lunr')
         .then(function(value) {
           if (value) {
-            console.log('Existing lunr found')
+            app.message = 'Existing data found in localstorage.'
             app.idx = lunr.Index.load(JSON.parse(value))
             localforage
               .getItem('store')
               .then(function (value) {
                 app.store = JSON.parse(value)
-              })
-            localforage
-              .getItem('lastPull')
-              .then(function (value) {
-                app.lastPull = value
+                localforage
+                  .getItem('lastPull')
+                  .then(function (value) {
+                    app.lastPull = value
+                    app.isLoading = false
+                  })
               })
           } else {
-            console.log('Creating stores...')
+            app.message = 'Creating stores...'
             var q = []
             app.createNotesStore().then(function(value) {
               Promise.all(value).then(
@@ -61,6 +63,7 @@ var app = new Vue({
         })
     },
     refresh: function() {
+      app.isLoading = true
       var r = ['store', 'lunr', 'lastPulled']
       var q = []
 
@@ -73,7 +76,7 @@ var app = new Vue({
       })
     },
     buildLunr: function () {
-      console.log('Building lunr...')
+      app.message = 'Building database...'
       // builds lunr based on contents of store
       this.idx = lunr(function() {
         this.field('title')
@@ -86,7 +89,7 @@ var app = new Vue({
       localforage
         .setItem('store', JSON.stringify(app.store))
         .then(function() {
-          console.log('Store saved locally')
+          app.message = 'Database saved locally.'
         })
 
       localforage
@@ -99,7 +102,8 @@ var app = new Vue({
             .setItem('lastPull', d)
             .then(function(value) {
               app.lastPull = d
-              console.log('Lunr built and saved locally at ' + value)
+              app.message = 'Database built and saved locally at ' + value
+              app.isLoading = false
             })
         })
 
@@ -113,6 +117,8 @@ var app = new Vue({
         $.get('https://beatobongco.com/TIL/day_notes/', function(resp) {
           var tempHTML = document.createElement('html')
           tempHTML.innerHTML = resp
+          var numItems = $('ul li a', tempHTML).length
+
           $('ul li a', tempHTML).each(function(i, obj) {
             var toScrape = $(obj).attr('href').replace(origURL, rawURL)
             deferreds.push(
@@ -120,7 +126,7 @@ var app = new Vue({
                 var rawNotes = document.createElement('html')
                 rawNotes.innerHTML = resp2
                 var linkedURL = toScrape.replace(rawURL, origURL)
-                console.log('Loading day notes...')
+                app.message = 'Loading day notes... ' + (i + 1) + '/' + numItems
                 app.store[linkedURL] = {
                   'id': linkedURL,
                   'title': toScrape.replace(rawURL, ''),
@@ -142,6 +148,7 @@ var app = new Vue({
         $.get('https://beatobongco.com/book-highlights/', function(resp) {
           var tempHTML = document.createElement('html')
           tempHTML.innerHTML = resp
+          var numItems = $('.entry a', tempHTML).length
 
           $('.entry a', tempHTML).each(function(i, obj) {
             var href = $(obj).attr('href')
@@ -154,7 +161,7 @@ var app = new Vue({
                   var notesText = $('#raw-notes', rawNotes).text()
                   var bookTitle = notesText.split('\n')[2]
                   if (!notesText.startsWith('Bought physical copy.')) {
-                    console.log('Loading book highlights...')
+                    app.message = 'Loading book highlights...' + (i + 1) + '/' + numItems
                     app.store[fullURL] = {
                       'id': fullURL,
                       'title': bookTitle,

@@ -81,3 +81,7 @@ ul {
   opacity: 0;
   transform: translateX(-10px);
 }
+
+.message {
+  margin-top: 2.5rem;
+}
