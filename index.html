@@ -1,30 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title></title>
-  <style type="text/css">
-    .highlight {
-      background-color: yellow;
-    }
-  </style>
+  <title>selfsearch: personal search utility - beatobongco.com</title>
+  <link href="https://fonts.googleapis.com/css?family=Fira+Sans:300,400,600" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-  <h1>selfsearch</h1>
-  <div id="app">
-    <p>Last pulled: {{lastPull}} <button @click="refresh">Refresh</button></p>
-    <input type="text" name="query" v-model="query" @keyup.enter="search">
-    <button v-on:click="search">Go</button>
-    <ul v-if="results.length > 0">
-      <li v-for="res in results">
-        <div>
-          <a :href="res.url">{{res.title}}</a>
-          <ul>
-            <li v-for="hl in res.highlights" v-html="hl"></li>
-          </ul>
-        </div>
-      </li>
-    </ul>
-    <p v-else>No results.</p>
+  <div class="container">
+    <div id="app">
+      <div class="flex">
+        <h1>selfsearch</h1>
+        <p class="last-updated">Last pulled: {{lastPull}} <button @click="refresh">Refresh</button></p>
+      </div>
+      <div class="flex">
+        <input type="text" name="query" v-model="query" @keyup.enter="search" placeholder="Search...">
+        <button class="btn-search" v-on:click="search">Go</button>
+      </div>
+      <div class="results">
+        <ul v-if="results.length > 0">
+          <li v-for="res in results">
+            <div>
+              <a class="title" :href="res.url">{{res.title}}</a>
+              <ul class="highlights">
+                <li v-for="hl in res.highlights" v-html="hl"></li>
+              </ul>
+            </div>
+          </li>
+        </ul>
+        <p v-else>No results.</p>
+      </div>
+    </div>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.2/vue.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>

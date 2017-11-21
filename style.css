@@ -1,0 +1,72 @@
+body {
+  font-family: 'Fira Sans';
+  font-weight: 300;
+  font-size: .95rem;
+}
+
+h1 {
+  font-weight: 600;
+}
+
+.flex {
+  display: flex;
+  align-items: center;
+}
+
+button {
+  background-color: #c0392b;
+  color: #fff;
+  border: none;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-family: 'Fira Sans';
+  font-size: .9rem;
+  font-weight: 400;
+}
+
+button:hover {
+  opacity: .8;
+}
+
+input[type=text] {
+  font-family: 'Fira Sans';
+  font-weight: 300;
+  font-size: 1rem;
+  padding: 2px 5px;
+  width: 350px;
+}
+
+.last-updated {
+  margin-left: 1rem;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.highlight {
+  background-color: yellow;
+}
+
+.btn-search {
+  margin-left: 5px;
+}
+
+.results {
+  margin-top: 1.5rem;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+.title {
+  font-size: 1rem;
+}
+
+.highlights {
+  margin-top: .5rem;
+  margin-bottom: 1rem;
+}

@@ -5,6 +5,9 @@
 var CHR_BUFFER = 50
 
 // https://lunrjs.com/guides/index_prebuilding.html
+// TODO:
+// * add loading + progress (get counts)
+// * add vue transitions
 
 String.prototype.splice = function(idx, rem, str) {
   return this.slice(0, idx) + str + this.slice(idx + Math.abs(rem))
@@ -169,14 +172,11 @@ var app = new Vue({
       this.results = []
       var res = this.idx.search(this.query)
 
-      console.log(res)
-
       for (var i = 0; i < res.length; i++) {
         var k = res[i].ref
 
         var matchdata = res[i]['matchData']['metadata']
         var indexes = []
-        console.log(matchdata)
 
         for (var m in matchdata) {
           indexes.push({
