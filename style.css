@@ -70,3 +70,14 @@ ul {
   margin-top: .5rem;
   margin-bottom: 1rem;
 }
+
+.trn-results-enter-active,
+.trn-results-leave-active {
+  transition: all .5s;
+}
+
+.trn-results-enter,
+.trn-results-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
+}

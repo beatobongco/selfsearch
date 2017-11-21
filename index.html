@@ -18,18 +18,21 @@
       </div>
       <div class="results">
         <ul v-if="results.length > 0">
-          <li v-for="res in results">
-            <div>
-              <a class="title" :href="res.url">{{res.title}}</a>
-              <ul class="highlights">
-                <li v-for="hl in res.highlights" v-html="hl"></li>
-              </ul>
-            </div>
-          </li>
+          <transition-group appear name="trn-results" tag="div">
+            <li v-for="res in results" :key="res.url">
+              <div>
+                <a class="title" :href="res.url">{{res.title}}</a>
+                <ul class="highlights">
+                  <li v-for="hl in res.highlights" v-html="hl"></li>
+                </ul>
+              </div>
+            </li>
+          </transition-group>
         </ul>
-        <p v-else>No results.</p>
+        <p v-else-if="!firstRun">No results.</p>
       </div>
     </div>
+    <footer>Made with 🔥 by <a href="https://beatobongco.com/UI-Kata/">Beato Bongco</a></footer>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.2/vue.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>

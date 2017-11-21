@@ -16,6 +16,7 @@ String.prototype.splice = function(idx, rem, str) {
 var app = new Vue({
   el: '#app',
   data: {
+    firstRun: true,
     store: {},
     idx: null,
     lastPull: null,
@@ -169,7 +170,8 @@ var app = new Vue({
       })
     },
     search: function() {
-      this.results = []
+      this.firstRun = false
+      this.results.splice(0, this.results.length)
       var res = this.idx.search(this.query)
 
       for (var i = 0; i < res.length; i++) {
