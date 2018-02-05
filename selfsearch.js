@@ -42,6 +42,7 @@ var app = new Vue({
                   .then(function (value) {
                     app.lastPull = value
                     app.isLoading = false
+                    app.searchFromURLargs()
                   })
               })
           } else {
@@ -57,6 +58,15 @@ var app = new Vue({
 
           }
         })
+    },
+    searchFromURLargs: function() {
+      //search
+      var query = Arg('q')
+
+      if (query) {
+        app.setQuery(query)
+        app.search()
+      }
     },
     refresh: function() {
       app.isLoading = true
@@ -100,6 +110,7 @@ var app = new Vue({
               app.lastPull = d
               app.message = 'Database built and saved locally at ' + value
               app.isLoading = false
+              app.searchFromURLargs()
             })
         })
 
@@ -171,6 +182,9 @@ var app = new Vue({
           resolve(deferreds)
         })
       })
+    },
+    setQuery: function(q) {
+      this.query = q
     },
     search: function() {
       this.firstRun = false
