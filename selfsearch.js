@@ -42,7 +42,7 @@ var app = new Vue({
                   .then(function (value) {
                     app.lastPull = value
                     app.isLoading = false
-                    app.searchFromURLargs()
+                    app.searchFromHash()
                   })
               })
           } else {
@@ -59,9 +59,9 @@ var app = new Vue({
           }
         })
     },
-    searchFromURLargs: function() {
+    searchFromHash: function() {
       //search
-      var query = Arg('q')
+      var query = window.location.hash.replace('#', '')
 
       if (query) {
         app.setQuery(query)
@@ -110,7 +110,7 @@ var app = new Vue({
               app.lastPull = d
               app.message = 'Database built and saved locally at ' + value
               app.isLoading = false
-              app.searchFromURLargs()
+              app.searchFromHash()
             })
         })
 
@@ -238,6 +238,9 @@ var app = new Vue({
           highlights: highlights
         })
       }
+
+      // set url args
+      document.location.hash = this.query
     }
   }
 })
