@@ -205,11 +205,18 @@ var app = new Vue({
         }
 
         var highlights = []
+        var highlightQuery = null
 
         for (var j = 0; j < indexes.length; j++) {
+
           var _index = indexes[j].index
           var _word = indexes[j].word
           var text = this.store[k]
+
+          // first highlight will be search query
+          if (j === 0) {
+            highlightQuery = _word
+          }
 
           var start = _index - CHR_BUFFER
           start = start > -1 ? start : 0
@@ -226,7 +233,7 @@ var app = new Vue({
         }
 
         this.results.push({
-          url: k,
+          url: k + '?highlight=' + highlightQuery,
           title: text.title,
           highlights: highlights
         })
