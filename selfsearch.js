@@ -92,7 +92,7 @@ var app = new Vue({
         .setItem('lunr', JSON.stringify(app.idx))
         .then(function() {
           var d = new Date()
-          d = d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate() + ' ' + d.getHours() + ':' + d.getMinutes()
+          d = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() + ' ' + d.getHours() + ':' + d.getMinutes()
 
           localforage
             .setItem('lastPull', d)
