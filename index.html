@@ -19,8 +19,8 @@
           <p class="last-updated">Last pulled: {{lastPull}} <button @click="refresh">Refresh</button></p>
         </div>
         <div class="flex">
-          <input type="text" name="query" v-model="query" @keyup.enter="search" placeholder="Search...">
-          <button class="btn-search" v-on:click="search">Go</button>
+          <input type="text" name="query" class="query" v-model="query" @keyup="search" placeholder="Type something to search...">
+          <button class="btn-search" v-on:click="search" title="Totally unnecessary but aesthetic">Go</button>
         </div>
         <div class="results">
           <ul v-if="results.length > 0">
@@ -48,6 +48,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lunr.js/2.1.4/lunr.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.5.3/localforage.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/superagent/3.8.2/superagent.min.js"></script>
   <script src="selfsearch.js"></script>
 </body>
 </html>

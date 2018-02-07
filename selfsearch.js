@@ -46,16 +46,10 @@ var app = new Vue({
                   })
               })
           } else {
-            app.message = 'Creating stores...'
-            var q = []
-            app.createNotesStore().then(function(value) {
-              Promise.all(value).then(
-                app.createBookStore().then(function(value3) {
-                  Promise.all(value3).then(app.buildLunr)
-                })
-              )
-            })
-
+            app.message = 'Creating stores... (this make take a minute)'
+            app.createNotesStore()
+              .then(app.createBookStore)
+              .then(app.buildLunr)
           }
         })
     },
@@ -77,12 +71,11 @@ var app = new Vue({
         q.push(localforage.removeItem(r[i]))
       }
 
-      Promise.all(q).then(function() {
-        app.init()
-      })
+      Promise.all(q).then(app.init)
     },
     buildLunr: function () {
-      app.message = 'Building database...'
+      console.log('Building lunr database...')
+      app.message = 'Building lunr database...'
       // builds lunr based on contents of store
       this.idx = lunr(function() {
         this.field('title')
@@ -116,71 +109,88 @@ var app = new Vue({
 
     },
     createNotesStore: function() {
-      return new Promise(function(resolve, reject) {
+      return new Promise(function(resolve) {
+        console.log('Loading notes...')
+        var counter = 0 // aesthetic counter so our users don't worry browser has hung
         var deferreds = []
+        // we need to scrape raw from github because orig URL has CORS
+        // this is trickier to generalize
         var rawURL = 'https://raw.githubusercontent.com/beatobongco/TIL/master/day_notes/'
         var origURL = 'https://github.com/beatobongco/TIL/blob/master/day_notes/'
 
-        $.get('https://beatobongco.com/TIL/day_notes/', function(resp) {
-          var tempHTML = document.createElement('html')
-          tempHTML.innerHTML = resp
-          var numItems = $('ul li a', tempHTML).length
-
-          $('ul li a', tempHTML).each(function(i, obj) {
-            var toScrape = $(obj).attr('href').replace(origURL, rawURL)
-            deferreds.push(
-              $.get(toScrape, function(resp2) {
-                var rawNotes = document.createElement('html')
-                rawNotes.innerHTML = resp2
-                var linkedURL = toScrape.replace(rawURL, origURL)
-                app.message = 'Loading day notes... ' + (i + 1) + '/' + numItems
-                app.store[linkedURL] = {
-                  'id': linkedURL,
-                  'title': toScrape.replace(rawURL, ''),
-                  'body': resp2
-                }
-              })
-            )
-          }) // each
-          resolve(deferreds)
-        })
+        superagent
+          .get('https://beatobongco.com/TIL/day_notes/')
+          .then(function(res) {
+            var tempHTML = document.createElement('html')
+            tempHTML.innerHTML = res
+            var numItems = $('ul li a', tempHTML).length
+            $('ul li a', tempHTML).each(function(i, obj) {
+              var toScrape = $(obj).attr('href').replace(origURL, rawURL)
+              deferreds.push(
+                superagent
+                  .get(toScrape)
+                  .then(function(res2) {
+                    var rawNotes = document.createElement('html')
+                    rawNotes.innerHTML = res2
+                    var linkedURL = toScrape.replace(rawURL, origURL)
+                    counter += 1
+                    app.message = 'Loading day notes... ' + counter + '/' + numItems
+                    app.store[linkedURL] = {
+                      'id': linkedURL,
+                      'title': toScrape.replace(rawURL, ''),
+                      'body': res2
+                    }
+                  })
+              )
+            }) //each
+            Promise.all(deferreds).then(resolve)
+          })
       })
     },
     createBookStore: function() {
       // side effect: adds to app.store's keys and values
       // returns an array of $.get Promises
       return new Promise(function(resolve, reject) {
+        console.log('Loading books...')
+        var counter = 0
         var deferreds = []
 
-        $.get('https://beatobongco.com/book-highlights/', function(resp) {
-          var tempHTML = document.createElement('html')
-          tempHTML.innerHTML = resp
-          var numItems = $('.entry a', tempHTML).length
+        superagent
+          .get('https://beatobongco.com/book-highlights/')
+          .then(function(res) {
+            var tempHTML = document.createElement('html')
+            tempHTML.innerHTML = res
+            var numItems = $('.entry a', tempHTML).length
 
-          $('.entry a', tempHTML).each(function(i, obj) {
-            var href = $(obj).attr('href')
-            if (href.startsWith('book')) {
-              var fullURL = 'https://beatobongco.com/book-highlights/' + href
-              deferreds.push(
-                $.get(fullURL, function(resp2) {
-                  var rawNotes = document.createElement('html')
-                  rawNotes.innerHTML = resp2
-                  var notesText = $('#raw-notes', rawNotes).text()
-                  var bookTitle = notesText.split('\n')[2]
-                  if (!notesText.startsWith('Bought physical copy.')) {
-                    app.message = 'Loading book highlights...' + (i + 1) + '/' + numItems
-                    app.store[fullURL] = {
-                      'id': fullURL,
-                      'title': bookTitle,
-                      'body': notesText
-                    }
-                  }
-                })
-              )
-            }
-          }) //each
-          resolve(deferreds)
-        })
+            $('.entry a', tempHTML).each(function(i, obj) {
+              var href = $(obj).attr('href')
+              // could make this into scrapeIf function rule
+              if (href.startsWith('book')) {
+                var fullURL = 'https://beatobongco.com/book-highlights/' + href
+                deferreds.push(
+                  superagent
+                    .get(fullURL)
+                    .then(function(res2) {
+                      var rawNotes = document.createElement('html')
+                      rawNotes.innerHTML = res2
+                      // #raw-notes can be generalized as a selector text
+                      var notesText = $('#raw-notes', rawNotes).text()
+                      var bookTitle = notesText.split('\n')[2]
+                      if (!notesText.startsWith('Bought physical copy.')) {
+                        counter += 1
+                        app.message = 'Loading book highlights... ' + counter + '/' + numItems
+                        app.store[fullURL] = {
+                          'id': fullURL,
+                          'title': bookTitle,
+                          'body': notesText
+                        }
+                      }
+                    })
+                )
+              }
+            }) //each
+            Promise.all(deferreds).then(resolve)
+          })
       })
     },
     setQuery: function(q) {
@@ -241,6 +251,8 @@ var app = new Vue({
 
       // set url args
       document.location.hash = this.query
+      var sel = document.querySelector('.query')
+      if (sel) sel.focus()
     }
   }
 })
