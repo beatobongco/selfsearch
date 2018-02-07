@@ -46,7 +46,7 @@ var app = new Vue({
                   })
               })
           } else {
-            app.message = 'Creating stores... (this make take a minute)'
+            app.message = 'Creating stores... (this could take a minute)'
             app.createNotesStore()
               .then(app.createBookStore)
               .then(app.buildLunr)
