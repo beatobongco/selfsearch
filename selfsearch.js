@@ -46,7 +46,7 @@ var app = new Vue({
                   })
               })
           } else {
-            app.message = 'Creating stores... (this could take a minute)'
+            app.message = 'Creating stores...'
             app.createNotesStore()
               .then(app.createBookStore)
               .then(app.buildLunr)
@@ -109,9 +109,9 @@ var app = new Vue({
 
     },
     createNotesStore: function() {
+      console.log('Loading notes...')
+      app.message = 'Loading notes... (this could take a minute)'
       return new Promise(function(resolve) {
-        console.log('Loading notes...')
-        var counter = 0 // aesthetic counter so our users don't worry browser has hung
         var deferreds = []
         // we need to scrape raw from github because orig URL has CORS
         // this is trickier to generalize
@@ -123,7 +123,6 @@ var app = new Vue({
           .then(function(res) {
             var tempHTML = document.createElement('html')
             tempHTML.innerHTML = res
-            var numItems = $('ul li a', tempHTML).length
             $('ul li a', tempHTML).each(function(i, obj) {
               var toScrape = $(obj).attr('href').replace(origURL, rawURL)
               deferreds.push(
@@ -133,8 +132,6 @@ var app = new Vue({
                     var rawNotes = document.createElement('html')
                     rawNotes.innerHTML = res2
                     var linkedURL = toScrape.replace(rawURL, origURL)
-                    counter += 1
-                    app.message = 'Loading day notes... ' + counter + '/' + numItems
                     app.store[linkedURL] = {
                       'id': linkedURL,
                       'title': toScrape.replace(rawURL, ''),
@@ -150,9 +147,9 @@ var app = new Vue({
     createBookStore: function() {
       // side effect: adds to app.store's keys and values
       // returns an array of $.get Promises
+      console.log('Loading books...')
+      app.message = 'Loading book highlights... (this could take a minute)'
       return new Promise(function(resolve, reject) {
-        console.log('Loading books...')
-        var counter = 0
         var deferreds = []
 
         superagent
@@ -160,7 +157,6 @@ var app = new Vue({
           .then(function(res) {
             var tempHTML = document.createElement('html')
             tempHTML.innerHTML = res
-            var numItems = $('.entry a', tempHTML).length
 
             $('.entry a', tempHTML).each(function(i, obj) {
               var href = $(obj).attr('href')
@@ -177,8 +173,6 @@ var app = new Vue({
                       var notesText = $('#raw-notes', rawNotes).text()
                       var bookTitle = notesText.split('\n')[2]
                       if (!notesText.startsWith('Bought physical copy.')) {
-                        counter += 1
-                        app.message = 'Loading book highlights... ' + counter + '/' + numItems
                         app.store[fullURL] = {
                           'id': fullURL,
                           'title': bookTitle,
