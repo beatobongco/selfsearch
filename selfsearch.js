@@ -47,7 +47,9 @@ var app = new Vue({
               })
           } else {
             app.message = 'Creating stores...'
-            app.createNotesStore()
+            app.addGithubFileFromURL('https://api.github.com/repos/beatobongco/TIL/contents/README.md?ref=master')
+               .then(app.addFromGithubDir('https://api.github.com/repos/beatobongco/TIL/contents/day_notes?ref=master', 'md'))
+               .then(app.addFromGithubDir('https://api.github.com/repos/beatobongco/TIL/contents/presentations?ref=master', 'md'))
               .then(app.createBookStore)
               .then(app.buildLunr)
           }
@@ -107,36 +109,44 @@ var app = new Vue({
             })
         })
     },
-    createNotesStore: function () {
-      console.log('Loading notes...')
-      app.message = 'Loading notes... (this could take a minute)'
+    addGithubFileFromURL: function (url) {
+      return superagent.get(url).then(function (res) {
+        app.addGithubFileFromObject(res.body)
+      })
+    },
+    addGithubFileFromObject: function (file) {
+      return superagent
+              .get(file.download_url)
+              .then(function (res) {
+                app.store[file.html_url] = {
+                  id: file.html_url,
+                  title: file.name,
+                  body: res.text
+                }
+              })
+    },
+    addFromGithubDir: function (url, filter) {
+      // adds from github directory, non-recursive
+      // filter: file extension e.g. md for markdown
+      // return an array of deferreds
+      console.log('Loading from ' + url + '...')
+      app.message = 'Loading from ' + url + '...'
       return new Promise(function (resolve) {
-        var deferreds = []
-        // we need to scrape raw from github because orig URL has CORS
-        // this is trickier to generalize
-        var rawURL = 'https://raw.githubusercontent.com/beatobongco/TIL/master/day_notes/'
-        var origURL = 'https://github.com/beatobongco/TIL/blob/master/day_notes/'
-
+        let deferreds = []
         superagent
-          .get('https://api.github.com/repos/beatobongco/TIL/contents/day_notes?ref=master')
+          .get(url)
           .then(function (res) {
-            // var tempHTML = document.createElement('html')
-            // tempHTML.innerHTML = res
-            // go through all links
             for (var x = 0; x < res.body.length; x++) {
               let rb = res.body[x]
-              if (rb.download_url && rb.html_url) {
-                deferreds.push(
-                  superagent
-                    .get(rb.download_url)
-                    .then(function (res2) {
-                      app.store[rb.html_url] = {
-                        id: rb.html_url,
-                        title: rb.name,
-                        body: res2.text
-                      }
-                    })
-                )
+              let _arr = rb.name.split('.')
+              if (rb.download_url && rb.html_url && rb.type === 'file') {
+                // get filename and apply filter
+                if (_arr[_arr.length - 1] === filter) {
+                  console.log('Loading ' + rb.name)
+                  deferreds.push(app.addGithubFileFromObject(rb))
+                } else {
+                  console.log('Filter caught ' + rb.name)
+                }
               }
             }
             Promise.all(deferreds).then(resolve)
