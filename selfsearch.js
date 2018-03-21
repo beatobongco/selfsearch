@@ -4,7 +4,7 @@
 
 var CHR_BUFFER = 50
 
-String.prototype.splice = function(idx, rem, str) {
+String.prototype.splice = function (idx, rem, str) {
   return this.slice(0, idx) + str + this.slice(idx + Math.abs(rem))
 }
 
@@ -20,16 +20,16 @@ var app = new Vue({
     query: '',
     results: []
   },
-  mounted: function() {
+  mounted: function () {
     this.init()
   },
   methods: {
-    init: function() {
+    init: function () {
       this.query = ''
       this.results = []
       localforage
         .getItem('lunr')
-        .then(function(value) {
+        .then(function (value) {
           if (value) {
             app.message = 'Existing data found in localstorage.'
             app.idx = lunr.Index.load(JSON.parse(value))
@@ -53,8 +53,8 @@ var app = new Vue({
           }
         })
     },
-    searchFromHash: function() {
-      //search
+    searchFromHash: function () {
+      // search
       var query = window.location.hash.replace('#', '')
 
       if (query) {
@@ -62,7 +62,7 @@ var app = new Vue({
         app.search()
       }
     },
-    refresh: function() {
+    refresh: function () {
       app.isLoading = true
       var r = ['store', 'lunr', 'lastPulled']
       var q = []
@@ -77,7 +77,7 @@ var app = new Vue({
       console.log('Building lunr database...')
       app.message = 'Building lunr database...'
       // builds lunr based on contents of store
-      this.idx = lunr(function() {
+      this.idx = lunr(function () {
         this.field('title')
         this.field('body')
         for (var prop in app.store) {
@@ -87,31 +87,30 @@ var app = new Vue({
 
       localforage
         .setItem('store', JSON.stringify(app.store))
-        .then(function() {
+        .then(function () {
           app.message = 'Database saved locally.'
         })
 
       localforage
         .setItem('lunr', JSON.stringify(app.idx))
-        .then(function() {
+        .then(function () {
           var d = new Date()
           d = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() + ' ' + d.getHours() + ':' + d.getMinutes()
 
           localforage
             .setItem('lastPull', d)
-            .then(function(value) {
+            .then(function (value) {
               app.lastPull = d
               app.message = 'Database built and saved locally at ' + value
               app.isLoading = false
               app.searchFromHash()
             })
         })
-
     },
-    createNotesStore: function() {
+    createNotesStore: function () {
       console.log('Loading notes...')
       app.message = 'Loading notes... (this could take a minute)'
-      return new Promise(function(resolve) {
+      return new Promise(function (resolve) {
         var deferreds = []
         // we need to scrape raw from github because orig URL has CORS
         // this is trickier to generalize
@@ -119,56 +118,56 @@ var app = new Vue({
         var origURL = 'https://github.com/beatobongco/TIL/blob/master/day_notes/'
 
         superagent
-          .get('https://beatobongco.com/TIL/day_notes/')
-          .then(function(res) {
-            var tempHTML = document.createElement('html')
-            tempHTML.innerHTML = res
-            $('ul li a', tempHTML).each(function(i, obj) {
-              var toScrape = $(obj).attr('href').replace(origURL, rawURL)
-              deferreds.push(
-                superagent
-                  .get(toScrape)
-                  .then(function(res2) {
-                    var rawNotes = document.createElement('html')
-                    rawNotes.innerHTML = res2
-                    var linkedURL = toScrape.replace(rawURL, origURL)
-                    app.store[linkedURL] = {
-                      'id': linkedURL,
-                      'title': toScrape.replace(rawURL, ''),
-                      'body': res2
-                    }
-                  })
-              )
-            }) //each
+          .get('https://api.github.com/repos/beatobongco/TIL/contents/day_notes?ref=master')
+          .then(function (res) {
+            // var tempHTML = document.createElement('html')
+            // tempHTML.innerHTML = res
+            // go through all links
+            for (var x = 0; x < res.body.length; x++) {
+              let rb = res.body[x]
+              if (rb.download_url && rb.html_url) {
+                deferreds.push(
+                  superagent
+                    .get(rb.download_url)
+                    .then(function (res2) {
+                      app.store[rb.html_url] = {
+                        id: rb.html_url,
+                        title: rb.name,
+                        body: res2.text
+                      }
+                    })
+                )
+              }
+            }
             Promise.all(deferreds).then(resolve)
           })
       })
     },
-    createBookStore: function() {
+    createBookStore: function () {
       // side effect: adds to app.store's keys and values
       // returns an array of $.get Promises
       console.log('Loading books...')
       app.message = 'Loading book highlights... (this could take a minute)'
-      return new Promise(function(resolve, reject) {
+      return new Promise(function (resolve, reject) {
         var deferreds = []
 
         superagent
           .get('https://beatobongco.com/book-highlights/')
-          .then(function(res) {
+          .then(function (res) {
             var tempHTML = document.createElement('html')
-            tempHTML.innerHTML = res
+            tempHTML.innerHTML = res.text
 
-            $('.entry a', tempHTML).each(function(i, obj) {
+            $('.entry a', tempHTML).each(function (i, obj) {
               var href = $(obj).attr('href')
               // could make this into scrapeIf function rule
               if (href.startsWith('book')) {
-                var fullURL = 'https://beatobongco.com/book-highlights/' + href
+                let fullURL = 'https://beatobongco.com/book-highlights/' + href
                 deferreds.push(
                   superagent
                     .get(fullURL)
-                    .then(function(res2) {
+                    .then(function (res2) {
                       var rawNotes = document.createElement('html')
-                      rawNotes.innerHTML = res2
+                      rawNotes.innerHTML = res2.text
                       // #raw-notes can be generalized as a selector text
                       var notesText = $('#raw-notes', rawNotes).text()
                       var bookTitle = notesText.split('\n')[2]
@@ -182,15 +181,15 @@ var app = new Vue({
                     })
                 )
               }
-            }) //each
+            }) // each
             Promise.all(deferreds).then(resolve)
           })
       })
     },
-    setQuery: function(q) {
+    setQuery: function (q) {
       this.query = q
     },
-    search: function() {
+    search: function () {
       this.firstRun = false
       this.results.splice(0, this.results.length)
       var res = this.idx.search(this.query)
@@ -212,7 +211,6 @@ var app = new Vue({
         var highlightQuery = null
 
         for (var j = 0; j < indexes.length; j++) {
-
           var _index = indexes[j].index
           var _word = indexes[j].word
           var text = this.store[k]
